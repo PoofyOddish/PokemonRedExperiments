@@ -24,7 +24,7 @@ imageio==2.31.1
 ipython==8.14.0
 jax==0.4.14
 jax-jumpy==1.0.0
-jaxlib==0.4.14
+jaxlib==0.4.19
 jedi==0.18.2
 Jinja2==3.1.2
 joblib==1.2.0
