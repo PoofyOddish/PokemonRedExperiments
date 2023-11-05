@@ -13,3 +13,6 @@ PokemonRed.gb.state
 
 #venv
 pokexp/
+
+#learning pyboy
+pyboy-test/

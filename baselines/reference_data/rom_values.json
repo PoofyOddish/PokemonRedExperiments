@@ -1,0 +1,127 @@
+
+{
+    "Source":"https://datacrystal.romhacking.net/wiki/Pok%C3%A9mon_Red/Blue:RAM_map",
+    "Player Data": {
+        "Current Map Number":"0xD35E",
+        "Current Player Y-Position":"0xD361",
+        "Current Player X-Position":"0xD362",
+        "Number of Pokemon in Party":"0xD163",
+        "Badges":"0xD356",
+        "Money":["0xD347","0xD348","0xD349"]
+    },
+    "Party": {
+        "Pokemon 1":{
+            "Party Value":"0xD164",
+            "Current HP": "0xD16C",
+            "Current HP 2": "0xD16D",
+            "Type 1":"0xD170",
+            "Type 2":"0xD171",
+            "Current Level":"0xD18C",
+            "Max HP":"0xD18D"
+        },
+        "Pokemon 2":{
+            "Party Value":"0xD165",
+            "Current HP": "0xD198",
+            "Type 1":"",
+            "Type 2":"",
+            "Current Level":"0xD1B8",
+            "Max HP":"0xD1B9"
+        },
+        "Pokemon 3":{
+            "Party Value":"0xD166",
+            "Current HP": "0xD1C4",
+            "Type 1":"",
+            "Type 2":"",
+            "Current Level":"0xD1E4",
+            "Max HP":"0xD1E5"
+        },
+        "Pokemon 4":{
+            "Party Value":"0xD167",
+            "Current HP": "0xD1F0",
+            "Type 1":"",
+            "Type 2":"",
+            "Current Level":"0xD210",
+            "Max HP":"0xD211"
+            
+        },
+        "Pokemon 5":{
+            "Party Value":"0xD168",
+            "Current HP": "0xD21C",
+            "Type 1":"",
+            "Type 2":"",
+            "Current Level":"0xD23C",
+            "Max HP":"0xD23D"
+        },
+        "Pokemon 6":{
+            "Party Value":"0xD169",
+            "Current HP": "0xD248",
+            "Type 1":"",
+            "Type 2":"",
+            "Current Level":"0xD268",
+            "Max HP":"0xD269"
+        }
+    },
+    "Battle": {
+        "Type of Battle":"0xD057",
+        "Critical Hit/ OHKO Flag":"0xD05E",
+        "Current User Move Type":"0xCFD5",
+        "Current Enemy Pokemon Type 1":"0xCFEA",
+        "Current Enemy Pokemon Type 2":"0xCFEB",
+        "Party": {
+            "Pokemon 1":{
+                "Party Value":"",
+                "Current HP": "",
+                "Current HP 2": "",
+                "Type 1":"0xD8A9",
+                "Type 2":"0xD8AA",
+                "Current Level":"0xD8C5",
+                "Max HP":"0xD8C6"
+            },
+            "Pokemon 2":{
+                "Party Value":"",
+                "Current HP": "",
+                "Type 1":"",
+                "Type 2":"",
+                "Current Level":"0xD8F1",
+                "Max HP":""
+            },
+            "Pokemon 3":{
+                "Party Value":"",
+                "Current HP": "",
+                "Type 1":"",
+                "Type 2":"",
+                "Current Level":"0xD91D",
+                "Max HP":""
+            },
+            "Pokemon 4":{
+                "Party Value":"",
+                "Current HP": "",
+                "Type 1":"",
+                "Type 2":"",
+                "Current Level":"0xD949",
+                "Max HP":""
+                
+            },
+            "Pokemon 5":{
+                "Party Value":"",
+                "Current HP": "",
+                "Type 1":"",
+                "Type 2":"",
+                "Current Level":"0xD975",
+                "Max HP":""
+            },
+            "Pokemon 6":{
+                "Party Value":"",
+                "Current HP": "",
+                "Type 1":"",
+                "Type 2":"",
+                "Current Level":"0xD9A1",
+                "Max HP":""
+            }
+        }
+    },
+    "Pokedex":{
+        "Own 1-8":"0xD2F7",
+        "Own 9-16":"0xD2F8"
+    }
+}

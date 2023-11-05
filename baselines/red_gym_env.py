@@ -19,9 +19,9 @@ import pandas as pd
 from gymnasium import Env, spaces
 from pyboy.utils import WindowEvent
 
+import utility as util
+
 class RedGymEnv(Env):
-
-
     def __init__(
         self, config=None):
 
@@ -95,6 +95,20 @@ class RedGymEnv(Env):
         # Set these in ALL subclasses
         self.action_space = spaces.Discrete(len(self.valid_actions))
         self.observation_space = spaces.Box(low=0, high=255, shape=self.output_full, dtype=np.uint8)
+
+        # Set rom memory values
+        self.rom_data = util.fetch_rom_ref()
+        self.player_data = {'x':util.convert_hex_string_to_int(self.rom_data['Player Data']['Current Player X-Position'])
+                                ,'y':util.convert_hex_string_to_int(self.rom_data['Player Data']['Current Player Y-Position'])
+                                ,'map':util.convert_hex_string_to_int(self.rom_data['Player Data']['Current Map Number'])
+                                ,'badges':util.convert_hex_string_to_int(self.rom_data['Player Data']['Badges'])
+                                ,'num pokemon':util.convert_hex_string_to_int(self.rom_data['Player Data']['Number of Pokemon in Party'])}
+        self.party_levels = [util.convert_hex_string_to_int(self.rom_data['Party'][x]['Current Level']) for x in self.rom_data['Party']]
+        self.party_pokemon = [util.convert_hex_string_to_int(self.rom_data['Party'][x]['Party Value']) for x in self.rom_data['Party']]
+        self.party_max_hp = [util.convert_hex_string_to_int(self.rom_data['Party'][x]['Max HP']) for x in self.rom_data['Party']]
+        self.party_current_hp = [util.convert_hex_string_to_int(self.rom_data['Party'][x]['Current HP']) for x in self.rom_data['Party']]
+        self.battle_pokemon_levels = [util.convert_hex_string_to_int(self.rom_data['Battle']['Party'][x]['Current Level']) for x in self.rom_data['Battle']['Party']]
+        self.player_money = [util.convert_hex_string_to_int(x) for x in self.rom_data['Player Data']['Money']]
 
         head = 'headless' if config['headless'] else 'SDL2'
 
@@ -209,7 +223,7 @@ class RedGymEnv(Env):
             self.update_seen_coords()
             
         self.update_heal_reward()
-        self.party_size = self.read_m(0xD163)
+        self.party_size = self.read_m(self.player_data['num pokemon'])
 
         new_reward, new_prog = self.update_reward()
         
@@ -259,10 +273,10 @@ class RedGymEnv(Env):
         self.model_frame_writer.add_image(self.render(reduce_res=True, update_mem=False))
     
     def append_agent_stats(self, action):
-        x_pos = self.read_m(0xD362)
-        y_pos = self.read_m(0xD361)
-        map_n = self.read_m(0xD35E)
-        levels = [self.read_m(a) for a in [0xD18C, 0xD1B8, 0xD1E4, 0xD210, 0xD23C, 0xD268]]
+        x_pos = self.read_m(self.player_data['x'])
+        y_pos = self.read_m(self.player_data['y'])
+        map_n = self.read_m(self.player_data['map'])
+        levels = [self.read_m(a) for a in self.party_levels]
         if self.use_screen_explore:
             expl = ('frames', self.knn_index.get_current_count())
         else:
@@ -271,7 +285,7 @@ class RedGymEnv(Env):
             'step': self.step_count, 'x': x_pos, 'y': y_pos, 'map': map_n,
             'map_location': self.get_map_location(map_n),
             'last_action': action,
-            'pcount': self.read_m(0xD163), 
+            'pcount': self.read_m(self.player_data['num pokemon']), 
             'levels': levels, 
             'levels_sum': sum(levels),
             'ptypes': self.read_party(),
@@ -303,9 +317,9 @@ class RedGymEnv(Env):
                 )
     
     def update_seen_coords(self):
-        x_pos = self.read_m(0xD362)
-        y_pos = self.read_m(0xD361)
-        map_n = self.read_m(0xD35E)
+        x_pos = self.read_m(self.player_data['x'])
+        y_pos = self.read_m(self.player_data['y'])
+        map_n = self.read_m(self.player_data['map'])
         coord_string = f"x:{x_pos} y:{y_pos} m:{map_n}"
         if self.get_levels_sum() >= 22 and not self.levels_satisfied:
             self.levels_satisfied = True
@@ -427,7 +441,15 @@ class RedGymEnv(Env):
             pd.DataFrame(self.agent_stats).to_csv(
                 self.s_path / Path(f'agent_stats_{self.instance_id}.csv.gz'), compression='gzip', mode='a')
     
-    def read_m(self, addr):
+    def read_m(self, addr) -> int:
+        '''
+        read_m function
+        inputs:
+            addr (int): int of memory value to retrieve
+
+        outputs:
+            int: value of retrieved memory value
+        '''
         return self.pyboy.get_memory_value(addr)
 
     def read_bit(self, addr, bit: int) -> bool:
@@ -435,7 +457,7 @@ class RedGymEnv(Env):
         return bin(256 + self.read_m(addr))[-bit-1] == '1'
     
     def get_levels_sum(self):
-        poke_levels = [max(self.read_m(a) - 2, 0) for a in [0xD18C, 0xD1B8, 0xD1E4, 0xD210, 0xD23C, 0xD268]]
+        poke_levels = [max(self.read_m(a) - 2, 0) for a in self.party_levels]
         return max(sum(poke_levels) - 4, 0) # subtract starting pokemon level
     
     def get_levels_reward(self):
@@ -459,16 +481,16 @@ class RedGymEnv(Env):
         return base + post
     
     def get_badges(self):
-        return self.bit_count(self.read_m(0xD356))
+        return self.bit_count(self.read_m(self.player_data['badges']))
 
     def read_party(self):
-        return [self.read_m(addr) for addr in [0xD164, 0xD165, 0xD166, 0xD167, 0xD168, 0xD169]]
+        return [self.read_m(addr) for addr in self.party_pokemon]
     
     def update_heal_reward(self):
         cur_health = self.read_hp_fraction()
         # if health increased and party size did not change
         if (cur_health > self.last_health and
-                self.read_m(0xD163) == self.party_size):
+                self.read_m(self.player_data['num pokemon']) == self.party_size):
             if self.last_health > 0:
                 heal_amount = cur_health - self.last_health
                 if heal_amount > 0.5:
@@ -480,6 +502,7 @@ class RedGymEnv(Env):
                 
     def get_all_events_reward(self):
         # adds up all event flags, exclude museum ticket
+        # see: https://github.com/pret/pokered/blob/91dc3c9f9c8fd529bb6e8307b58b96efa0bec67e/constants/event_constants.asm
         event_flags_start = 0xD747
         event_flags_end = 0xD886
         museum_ticket = (0xD754, 0)
@@ -546,7 +569,7 @@ class RedGymEnv(Env):
     
     def update_max_op_level(self):
         #opponent_level = self.read_m(0xCFE8) - 5 # base level
-        opponent_level = max([self.read_m(a) for a in [0xD8C5, 0xD8F1, 0xD91D, 0xD949, 0xD975, 0xD9A1]]) - 5
+        opponent_level = max([self.read_m(a) for a in self.battle_pokemon_levels]) - 5
         #if opponent_level >= 7:
         #    self.save_screenshot('highlevelop')
         self.max_opponent_level = max(self.max_opponent_level, opponent_level)
@@ -558,8 +581,8 @@ class RedGymEnv(Env):
         return self.max_event_rew
 
     def read_hp_fraction(self):
-        hp_sum = sum([self.read_hp(add) for add in [0xD16C, 0xD198, 0xD1C4, 0xD1F0, 0xD21C, 0xD248]])
-        max_hp_sum = sum([self.read_hp(add) for add in [0xD18D, 0xD1B9, 0xD1E5, 0xD211, 0xD23D, 0xD269]])
+        hp_sum = sum([self.read_hp(add) for add in self.party_current_hp])
+        max_hp_sum = sum([self.read_hp(add) for add in self.party_max_hp])
         max_hp_sum = max(max_hp_sum, 1)
         return hp_sum / max_hp_sum
 
@@ -577,9 +600,9 @@ class RedGymEnv(Env):
         return 10 * ((num >> 4) & 0x0f) + (num & 0x0f)
     
     def read_money(self):
-        return (100 * 100 * self.read_bcd(self.read_m(0xD347)) + 
-                100 * self.read_bcd(self.read_m(0xD348)) +
-                self.read_bcd(self.read_m(0xD349)))
+        return (100 * 100 * self.read_bcd(self.read_m(self.player_money[0])) + 
+                100 * self.read_bcd(self.read_m(self.player_money[1])) +
+                self.read_bcd(self.read_m(self.player_money[2])))
 
     def get_map_location(self, map_idx):
         map_locations = {
